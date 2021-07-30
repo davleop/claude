@@ -21,5 +21,11 @@ def main():
 
     claude = Claude(planet_settings, smoothing_settings, save_settings, plot_settings, coordinate_settings)
 
+    # claude.init()
+    # claude.setup()
+    # claude.setup_grids()
+    # claude.plot()
+    # claude.run()
+
 if __name__ == '__main__':
     main()

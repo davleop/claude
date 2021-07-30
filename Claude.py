@@ -31,3 +31,6 @@ class Claude:
         self.saving = saving
         self.plotting = plotting
         self.coordinates = coordinates
+
+        self.standard_atmosphere = "standard_atmosphere.txt"
+        self.verbose = False
