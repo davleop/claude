@@ -40,8 +40,8 @@ class Claude:
 
         self.t = 0.0
         self.sample_level = 15
-        self.last_plot = t-0.1
-        self.last_save = t-0.1
+        self.last_plot = self.t-0.1
+        self.last_save = self.t-0.1
 
     def setup(self):
         # tmp reference
@@ -202,7 +202,7 @@ class Claude:
             self.f.canvas.set_window_title('CLAuDE')
             self.ax[0].contourf(c.lon_plot, c.lat_plot, c.temperature_world, cmap='seismic')
             self.ax[0].streamplot(c.lon_plot, c.lat_plot, self.u[:,:,0], self.v[:,:,0], color='white',density=1)
-            self.test = self.ax[1].contourf(c.heights_plot, c.lat_z_plot, np.transpose(np.mean(low_level.theta_to_t(self.potential_temperature,p.pressure_levels),axis=1))[:pl.top,:], cmap='seismic',levels=15)
+            test = self.ax[1].contourf(c.heights_plot, c.lat_z_plot, np.transpose(np.mean(low_level.theta_to_t(self.potential_temperature,p.pressure_levels),axis=1))[:pl.top,:], cmap='seismic',levels=15)
             self.ax[1].contour(c.heights_plot,c.lat_z_plot, np.transpose(np.mean(self.u,axis=1))[:pl.top,:], colors='white',levels=20,linewidths=1,alpha=0.8)
             self.ax[1].quiver(c.heights_plot, c.lat_z_plot, np.transpose(np.mean(self.v,axis=1))[:pl.top,:],np.transpose(np.mean(100*self.w,axis=1))[:pl.top,:],color='black')
             plt.subplots_adjust(left=0.1, right=0.75)
@@ -215,7 +215,7 @@ class Claude:
             self.ax[1].set_ylabel('Pressure (hPa)')
             self.ax[1].set_xlabel('Latitude')
             self.cbar_ax = f.add_axes([0.85, 0.15, 0.05, 0.7])
-            self.f.colorbar(self.test, cax=self.cbar_ax)
+            self.f.colorbar(test, cax=self.cbar_ax)
             self.cbar_ax.set_title('Temperature (K)')
             self.f.suptitle( 'Time ' + str(round(self.t/p.day,2)) + ' days' )
 
@@ -284,128 +284,128 @@ class Claude:
             if not pl.diagnostic:
                 
                 # field = temperature_world
-                field = np.copy(w)[:,:,sample_level]
-                # field = np.copy(atmosp_addition)[:,:,sample_level]
-                test = ax[0].contourf(lon_plot, lat_plot, field, cmap='seismic',levels=15)
-                ax[0].contour(lon_plot, lat_plot, tracer[:,:,sample_level], alpha=0.5, antialiased=True, levels=np.arange(0.01,1.01,0.01))
-                if velocity:    ax[0].quiver(lon_plot[::quiver_padding,::quiver_padding], lat_plot[::quiver_padding,::quiver_padding], u[::quiver_padding,::quiver_padding,sample_level], v[::quiver_padding,::quiver_padding,sample_level], color='white')
-                ax[0].set_xlim((lon.min(),lon.max()))
-                ax[0].set_ylim((lat.min(),lat.max()))
-                ax[0].set_ylabel('Latitude')
-                ax[0].axhline(y=0,color='black',alpha=0.3)
-                ax[0].set_xlabel('Longitude')
+                field = np.copy(w)[:,:,self.sample_level]
+                # field = np.copy(atmosp_addition)[:,:,self.sample_level]
+                test = self.ax[0].contourf(c.lon_plot, c.lat_plot, field, cmap='seismic',levels=15)
+                self.ax[0].contour(c.lon_plot, c.lat_plot, self.tracer[:,:,self.sample_level], alpha=0.5, antialiased=True, levels=np.arange(0.01,1.01,0.01))
+                if self.velocity: self.ax[0].quiver(c.lon_plot[::quiver_padding,::quiver_padding], c.lat_plot[::quiver_padding,::quiver_padding], self.u[::quiver_padding,::quiver_padding,self.sample_level], self.v[::quiver_padding,::quiver_padding,self.sample_level], color='white')
+                self.ax[0].set_xlim((c.lon.min(),c.lon.max()))
+                self.ax[0].set_ylim((c.lat.min(),c.lat.max()))
+                self.ax[0].set_ylabel('Latitude')
+                self.ax[0].axhline(y=0,color='black',alpha=0.3)
+                self.ax[0].set_xlabel('Longitude')
 
                 ###
 
-                test = ax[1].contourf(heights_plot, lat_z_plot, np.transpose(np.mean(low_level.theta_to_t(potential_temperature,pressure_levels),axis=1))[:top,:], cmap='seismic',levels=15)
+                test = self.ax[1].contourf(c.heights_plot, c.lat_z_plot, np.transpose(np.mean(low_level.theta_to_t(self.potential_temperature,p.pressure_levels),axis=1))[:pl.top,:], cmap='seismic',levels=15)
                 # test = ax[1].contourf(heights_plot, lat_z_plot, np.transpose(np.mean(atmosp_addition,axis=1))[:top,:], cmap='seismic',levels=15)
                 # test = ax[1].contourf(heights_plot, lat_z_plot, np.transpose(np.mean(potential_temperature,axis=1)), cmap='seismic',levels=15)
-                ax[1].contour(heights_plot, lat_z_plot, np.transpose(np.mean(tracer,axis=1))[:top,:], alpha=0.5, antialiased=True, levels=np.arange(0.001,1.01,0.01))
+                self.ax[1].contour(c.heights_plot, c.lat_z_plot, np.transpose(np.mean(self.tracer,axis=1))[:pl.top,:], alpha=0.5, antialiased=True, levels=np.arange(0.001,1.01,0.01))
 
-                if velocity:
-                    ax[1].contour(heights_plot,lat_z_plot, np.transpose(np.mean(u,axis=1))[:top,:], colors='white',levels=20,linewidths=1,alpha=0.8)
-                    ax[1].quiver(heights_plot, lat_z_plot, np.transpose(np.mean(v,axis=1))[:top,:],np.transpose(np.mean(-10*w,axis=1))[:top,:],color='black')
-                ax[1].set_title('$\it{Atmospheric} \quad \it{temperature}$')
-                ax[1].set_xlim((-90,90))
-                ax[1].set_ylim((pressure_levels.max()/100,pressure_levels[:top].min()/100))
-                ax[1].set_ylabel('Pressure (hPa)')
-                ax[1].set_xlabel('Latitude')
-                ax[1].set_yscale('log')
-                f.colorbar(test, cax=cbar_ax)
-                cbar_ax.set_title('Temperature (K)')
-                f.suptitle( 'Time ' + str(round(t/day,2)) + ' days' )
+                if self.velocity:
+                    self.ax[1].contour(c.heights_plot,c.lat_z_plot, np.transpose(np.mean(self.u,axis=1))[:pl.top,:], colors='white',levels=20,linewidths=1,alpha=0.8)
+                    self.ax[1].quiver(c.heights_plot, c.lat_z_plot, np.transpose(np.mean(v,axis=1))[:pl.top,:],np.transpose(np.mean(-10*self.w,axis=1))[:pl.top,:],color='black')
+                self.ax[1].set_title('$\it{Atmospheric} \quad \it{temperature}$')
+                self.ax[1].set_xlim((-90,90))
+                self.ax[1].set_ylim((p.pressure_levels.max()/100,p.pressure_levels[:pl.top].min()/100))
+                self.ax[1].set_ylabel('Pressure (hPa)')
+                self.ax[1].set_xlabel('Latitude')
+                self.ax[1].set_yscale('log')
+                self.f.colorbar(test, cax=self.cbar_ax)
+                self.cbar_ax.set_title('Temperature (K)')
+                f.suptitle( 'Time ' + str(round(self.t/p.day,2)) + ' days' )
                     
             else:
-                ax[0,0].contourf(heights_plot, lat_z_plot, np.transpose(np.mean(u,axis=1))[:top,:], cmap='seismic')
-                ax[0,0].set_title('u')
-                ax[0,1].contourf(heights_plot, lat_z_plot, np.transpose(np.mean(v,axis=1))[:top,:], cmap='seismic')
-                ax[0,1].set_title('v')
-                ax[1,0].contourf(heights_plot, lat_z_plot, np.transpose(np.mean(w,axis=1))[:top,:], cmap='seismic')
-                ax[1,0].set_title('w')
-                ax[1,1].contourf(heights_plot, lat_z_plot, np.transpose(np.mean(atmosp_addition,axis=1))[:top,:], cmap='seismic')
-                ax[1,1].set_title('atmosp_addition')
-                for axis in ax.ravel():
-                    axis.set_ylim((pressure_levels.max()/100,pressure_levels[:top].min()/100))
+                self.ax[0,0].contourf(c.heights_plot, c.lat_z_plot, np.transpose(np.mean(self.u,axis=1))[:pl.top,:], cmap='seismic')
+                self.ax[0,0].set_title('u')
+                self.ax[0,1].contourf(c.heights_plot, c.lat_z_plot, np.transpose(np.mean(self.v,axis=1))[:pl.top,:], cmap='seismic')
+                self.ax[0,1].set_title('v')
+                self.ax[1,0].contourf(c.heights_plot, c.lat_z_plot, np.transpose(np.mean(self.w,axis=1))[:pl.top,:], cmap='seismic')
+                self.ax[1,0].set_title('w')
+                self.ax[1,1].contourf(c.heights_plot, c.lat_z_plot, np.transpose(np.mean(self.atmosp_addition,axis=1))[:pl.top,:], cmap='seismic')
+                self.ax[1,1].set_title('atmosp_addition')
+                for axis in self.ax.ravel():
+                    axis.set_ylim((p.pressure_levels.max()/100,p.pressure_levels[:pl.top].min()/100))
                     axis.set_yscale('log')
-                f.suptitle( 'Time ' + str(round(t/day,2)) + ' days' )
+                f.suptitle( 'Time ' + str(round(self.t/p.day,2)) + ' days' )
 
-            if level_plots:
-                for k, z in zip(range(nplots), level_plots_levels): 
+            if pl.level_plots:
+                for k, z in zip(range(pl.nplots), self.level_plots_levels): 
                     z += 1
-                    bx[k].contourf(lon_plot, lat_plot, potential_temperature[:,:,z], cmap='seismic',levels=15)
-                    bx[k].quiver(lon_plot[::quiver_padding,::quiver_padding], lat_plot[::quiver_padding,::quiver_padding], u[::quiver_padding,::quiver_padding,z], v[::quiver_padding,::quiver_padding,z], color='white')
-                    bx[k].set_title(str(round(pressure_levels[z]/100))+' hPa')
-                    bx[k].set_ylabel('Latitude')
-                    bx[k].set_xlim((lon.min(),lon.max()))
-                    bx[k].set_ylim((lat.min(),lat.max()))               
-                bx[-1].set_xlabel('Longitude')
+                    self.bx[k].contourf(c.lon_plot, c.lat_plot, self.potential_temperature[:,:,z], cmap='seismic',levels=15)
+                    self.bx[k].quiver(c.lon_plot[::quiver_padding,::quiver_padding], c.lat_plot[::quiver_padding,::quiver_padding], self.u[::quiver_padding,::quiver_padding,z], self.v[::quiver_padding,::quiver_padding,z], color='white')
+                    self.bx[k].set_title(str(round(p.pressure_levels[z]/100))+' hPa')
+                    self.bx[k].set_ylabel('Latitude')
+                    self.bx[k].set_xlim((c.lon.min(),c.lon.max()))
+                    self.bx[k].set_ylim((c.lat.min(),c.lat.max()))               
+                self.bx[-1].set_xlabel('Longitude')
 
-        if above and velocity:
-            gx[0].set_title('Original data')
-            gx[1].set_title('Polar plane')
-            gx[2].set_title('Reprojected data')
-            g.suptitle( 'Time ' + str(round(t/day,2)) + ' days' )
+        if pl.above and self.velocity:
+            self.gx[0].set_title('Original data')
+            self.gx[1].set_title('Polar plane')
+            self.gx[2].set_title('Reprojected data')
+            self.g.suptitle( 'Time ' + str(round(self.t/p.day,2)) + ' days' )
 
-            if pole == 's':
-                gx[0].set_title('temperature')
-                gx[0].contourf(lon,lat[:pole_low_index_S],potential_temperature[:pole_low_index_S,:,above_level])
+            if pl.pole == 's':
+                self.gx[0].set_title('temperature')
+                self.gx[0].contourf(c.lon,c.lat[:self.pole_low_index_S],self.potential_temperature[:self.pole_low_index_S,:,pl.above_level])
                 
-                gx[1].set_title('polar_plane_advect')
-                polar_temps = low_level.beam_me_up(lat[:pole_low_index_S],lon,potential_temperature[:pole_low_index_S,:,:],grids[1],grid_lat_coords_S,grid_lon_coords_S)
-                output = low_level.beam_me_up_2D(lat[:pole_low_index_S],lon,w[:pole_low_index_S,:,above_level],grids[1],grid_lat_coords_S,grid_lon_coords_S)
+                self.gx[1].set_title('polar_plane_advect')
+                self.polar_temps = low_level.beam_me_up(c.lat[:self.pole_low_index_S],c.lon,self.potential_temperature[:self.pole_low_index_S,:,:],self.grids[1],self.grid_lat_coords_S,self.grid_lon_coords_S)
+                output = low_level.beam_me_up_2D(c.lat[:self.pole_low_index_S],c.lon,self.w[:self.pole_low_index_S,:,pl.above_level],self.grids[1],self.grid_lat_coords_S,self.grid_lon_coords_S)
 
-                gx[1].contourf(grid_x_values_S/1E3,grid_y_values_S/1E3,output)
-                gx[1].contour(grid_x_values_S/1E3,grid_y_values_S/1E3,polar_temps[:,:,above_level],colors='white',levels=20,linewidths=1,alpha=0.8)
-                gx[1].quiver(grid_x_values_S/1E3,grid_y_values_S/1E3,x_dot_S[:,:,above_level],y_dot_S[:,:,above_level])
+                self.gx[1].contourf(self.grid_x_values_S/1E3,self.grid_y_values_S/1E3,output)
+                self.gx[1].contour(self.grid_x_values_S/1E3,self.grid_y_values_S/1E3,self.polar_temps[:,:,pl.above_level],colors='white',levels=20,linewidths=1,alpha=0.8)
+                self.gx[1].quiver(self.grid_x_values_S/1E3,self.grid_y_values_S/1E3,self.x_dot_S[:,:,pl.above_level],self.y_dot_S[:,:,pl.above_level])
                 
-                gx[1].add_patch(plt.Circle((0,0),planet_radius*np.cos(lat[pole_low_index_S]*np.pi/180.0)/1E3,color='r',fill=False))
-                gx[1].add_patch(plt.Circle((0,0),planet_radius*np.cos(lat[pole_high_index_S]*np.pi/180.0)/1E3,color='r',fill=False))
+                self.gx[1].add_patch(plt.Circle((0,0),p.planet_radius*np.cos(c.lat[self.pole_low_index_S]*np.pi/180.0)/1E3,color='r',fill=False))
+                self.gx[1].add_patch(plt.Circle((0,0),p.planet_radius*np.cos(c.lat[self.pole_high_index_S]*np.pi/180.0)/1E3,color='r',fill=False))
 
-                gx[2].set_title('south_addition_smoothed')
+                self.gx[2].set_title('south_addition_smoothed')
                 # gx[2].contourf(lon,lat[:pole_low_index_S],south_addition_smoothed[:pole_low_index_S,:,above_level])
-                gx[2].contourf(lon,lat[:pole_low_index_S],u[:pole_low_index_S,:,above_level])
-                gx[2].quiver(lon[::5],lat[:pole_low_index_S],u[:pole_low_index_S,::5,above_level],v[:pole_low_index_S,::5,above_level])
+                self.gx[2].contourf(c.lon,c.lat[:self.pole_low_index_S],self.u[:self.pole_low_index_S,:,pl.above_level])
+                self.gx[2].quiver(c.lon[::5],c.lat[:self.pole_low_index_S],self.u[:self.pole_low_index_S,::5,pl.above_level],self.v[:self.pole_low_index_S,::5,pl.above_level])
             else:
-                gx[0].set_title('temperature')
-                gx[0].contourf(lon,lat[pole_low_index_N:],potential_temperature[pole_low_index_N:,:,above_level])
+                self.gx[0].set_title('temperature')
+                self.gx[0].contourf(c.lon,c.lat[self.pole_low_index_N:],self.potential_temperature[self.pole_low_index_N:,:,pl.above_level])
                 
-                gx[1].set_title('polar_plane_advect')
-                polar_temps = low_level.beam_me_up(lat[pole_low_index_N:],lon,np.flip(potential_temperature[pole_low_index_N:,:,:],axis=1),grids[0],grid_lat_coords_N,grid_lon_coords_N)
-                output = low_level.beam_me_up_2D(lat[pole_low_index_N:],lon,atmosp_addition[pole_low_index_N:,:,above_level],grids[0],grid_lat_coords_N,grid_lon_coords_N)
-                output = low_level.beam_me_up_2D(lat[pole_low_index_N:],lon,w[pole_low_index_N:,:,above_level],grids[0],grid_lat_coords_N,grid_lon_coords_N)
+                self.gx[1].set_title('polar_plane_advect')
+                self.polar_temps = low_level.beam_me_up(c.lat[self.pole_low_index_N:],c.lon,np.flip(self.potential_temperature[self.pole_low_index_N:,:,:],axis=1),self.grids[0],self.grid_lat_coords_N,self.grid_lon_coords_N)
+                output = low_level.beam_me_up_2D(c.lat[self.pole_low_index_N:],c.lon,self.atmosp_addition[self.pole_low_index_N:,:,pl.above_level],self.grids[0],self.grid_lat_coords_N,self.grid_lon_coords_N)
+                output = low_level.beam_me_up_2D(c.lat[self.pole_low_index_N:],c.lon,self.w[self.pole_low_index_N:,:,pl.above_level],self.grids[0],self.grid_lat_coords_N,self.grid_lon_coords_N)
 
-                gx[1].contourf(grid_x_values_N/1E3,grid_y_values_N/1E3,output)
-                gx[1].contour(grid_x_values_N/1E3,grid_y_values_N/1E3,polar_temps[:,:,above_level],colors='white',levels=20,linewidths=1,alpha=0.8)
-                gx[1].quiver(grid_x_values_N/1E3,grid_y_values_N/1E3,x_dot_N[:,:,above_level],y_dot_N[:,:,above_level])
+                self.gx[1].contourf(self.grid_x_values_N/1E3,self.grid_y_values_N/1E3,output)
+                self.gx[1].contour(self.grid_x_values_N/1E3,self.grid_y_values_N/1E3,self.polar_temps[:,:,pl.above_level],colors='white',levels=20,linewidths=1,alpha=0.8)
+                self.gx[1].quiver(self.grid_x_values_N/1E3,self.grid_y_values_N/1E3,self.x_dot_N[:,:,pl.above_level],self.y_dot_N[:,:,pl.above_level])
                 
-                gx[1].add_patch(plt.Circle((0,0),planet_radius*np.cos(lat[pole_low_index_N]*np.pi/180.0)/1E3,color='r',fill=False))
-                gx[1].add_patch(plt.Circle((0,0),planet_radius*np.cos(lat[pole_high_index_N]*np.pi/180.0)/1E3,color='r',fill=False))
+                self.gx[1].add_patch(plt.Circle((0,0),p.planet_radius*np.cos(c.lat[self.pole_low_index_N]*np.pi/180.0)/1E3,color='r',fill=False))
+                self.gx[1].add_patch(plt.Circle((0,0),p.planet_radius*np.cos(c.lat[self.pole_high_index_N]*np.pi/180.0)/1E3,color='r',fill=False))
         
-                gx[2].set_title('south_addition_smoothed')
+                self.gx[2].set_title('south_addition_smoothed')
                 # gx[2].contourf(lon,lat[pole_low_index_N:],north_addition_smoothed[:,:,above_level])
-                gx[2].contourf(lon,lat[pole_low_index_N:],u[pole_low_index_N:,:,above_level])
-                gx[2].quiver(lon[::5],lat[pole_low_index_N:],u[pole_low_index_N:,::5,above_level],v[pole_low_index_N:,::5,above_level])
+                self.gx[2].contourf(c.lon,c.lat[self.pole_low_index_N:],self.u[self.pole_low_index_N:,:,pl.above_level])
+                self.gx[2].quiver(c.lon[::5],c.lat[self.pole_low_index_N:],self.u[self.pole_low_index_N:,::5,pl.above_level],self.v[self.pole_low_index_N:,::5,pl.above_level])
             
         # clear plots
         if plot or above:   plt.pause(0.001)
         if plot:
-            if not diagnostic:
-                ax[0].cla()
-                ax[1].cla()
-                cbar_ax.cla()
+            if not c.diagnostic:
+                self.ax[0].cla()
+                self.ax[1].cla()
+                self.cbar_ax.cla()
                         
             else:
-                ax[0,0].cla()
-                ax[0,1].cla()
-                ax[1,0].cla()
-                ax[1,1].cla()
-            if level_plots:
-                for k in range(nplots):
-                    bx[k].cla() 
+                self.ax[0,0].cla()
+                self.ax[0,1].cla()
+                self.ax[1,0].cla()
+                self.ax[1,1].cla()
+            if pl.level_plots:
+                for k in range(pl.nplots):
+                    self.bx[k].cla() 
             if self.verbose:     
                 time_taken = float(round(time.time() - before_plot,3))
                 print('Plotting: ',str(time_taken),'s') 
-        if above:
-            gx[0].cla()
-            gx[1].cla()
-            gx[2].cla()
+        if pl.above:
+            self.gx[0].cla()
+            self.gx[1].cla()
+            self.gx[2].cla()
