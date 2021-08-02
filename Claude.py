@@ -79,10 +79,10 @@ class Claude:
         p = self.planet
         c = self.coordinates
 
-        sigma = np.zeros_like(p.pressure_levels)
-        kappa = 287/1000
-        for i in range(len(sigma)):
-            sigma[i] = 1E3*(p.pressure_levels[i]/p.pressure_levels[0])**kappa
+        self.sigma = np.zeros_like(p.pressure_levels)
+        self.kappa = 287/1000
+        for i in range(len(self.sigma)):
+            self.sigma[i] = 1E3*(p.pressure_levels[i]/p.pressure_levels[0])**self.kappa
 
         self.heat_capacity_earth = np.zeros_like(c.temperature_world) + 1E6
 
@@ -128,8 +128,8 @@ class Claude:
         size_of_grid = p.planet_radius*np.cos(c.lat[self.pole_low_index_S+grid_pad]*np.pi/180.0)
 
         ### south pole ###
-        self.grid_x_values_S = np.arange(-size_of_grid,size_of_grid,polar_grid_resolution)
-        self.grid_y_values_S = np.arange(-size_of_grid,size_of_grid,polar_grid_resolution)
+        self.grid_x_values_S = np.arange(-size_of_grid,size_of_grid,self.polar_grid_resolution)
+        self.grid_y_values_S = np.arange(-size_of_grid,size_of_grid,self.polar_grid_resolution)
         grid_xx_S,grid_yy_S = np.meshgrid(self.grid_x_values_S,self.grid_y_values_S)
 
         self.grid_side_length = len(self.grid_x_values_S)
@@ -140,17 +140,17 @@ class Claude:
         self.polar_x_coords_S = []
         self.polar_y_coords_S = []
         for i in range(self.pole_low_index_S):
-            for j in range(nlon):
+            for j in range(c.nlon):
                 self.polar_x_coords_S.append( p.planet_radius*np.cos(c.lat[i]*np.pi/180.0)*np.sin(c.lon[j]*np.pi/180.0) )
                 self.polar_y_coords_S.append(-p.planet_radius*np.cos(c.lat[i]*np.pi/180.0)*np.cos(c.lon[j]*np.pi/180.0) )
 
         ### north pole ###
         
-        self.pole_low_index_N    =   np.where(lat < -pole_lower_latitude_limit)[0][-1]
-        self.pole_high_index_N   =   np.where(lat < -pole_higher_latitude_limit)[0][-1]
+        self.pole_low_index_N    =   np.where(c.lat < -c.pole_lower_latitude_limit)[0][-1]
+        self.pole_high_index_N   =   np.where(c.lat < -c.pole_higher_latitude_limit)[0][-1]
 
-        self.grid_x_values_N     =   np.arange(-size_of_grid,size_of_grid,polar_grid_resolution)
-        self.grid_y_values_N     =   np.arange(-size_of_grid,size_of_grid,polar_grid_resolution)
+        self.grid_x_values_N     =   np.arange(-size_of_grid,size_of_grid,self.polar_grid_resolution)
+        self.grid_y_values_N     =   np.arange(-size_of_grid,size_of_grid,self.polar_grid_resolution)
         grid_xx_N,grid_yy_N =   np.meshgrid(self.grid_x_values_N,self.grid_y_values_N)
 
         self.grid_lat_coords_N   =   (np.arccos((grid_xx_N**2 + grid_yy_N**2)**0.5/p.planet_radius)*180.0/np.pi).flatten()
@@ -158,8 +158,8 @@ class Claude:
 
         self.polar_x_coords_N    =   []
         self.polar_y_coords_N    =   []
-        for i in np.arange(self.pole_low_index_N,nlat):
-            for j in range(nlon):
+        for i in np.arange(self.pole_low_index_N,c.nlat):
+            for j in range(c.nlon):
                 self.polar_x_coords_N.append( p.planet_radius*np.cos(c.lat[i]*np.pi/180.0)*np.sin(c.lon[j]*np.pi/180.0) )
                 self.polar_y_coords_N.append(-p.planet_radius*np.cos(c.lat[i]*np.pi/180.0)*np.cos(c.lon[j]*np.pi/180.0) )
 
@@ -167,7 +167,7 @@ class Claude:
         self.grids   = (grid_xx_N.shape[0],grid_xx_S.shape[0])
 
         # create Coriolis data on north and south planes
-        self.data = np.zeros((nlat-self.pole_low_index_N+grid_pad,c.nlon))
+        self.data = np.zeros((c.nlat-self.pole_low_index_N+grid_pad,c.nlon))
         for i in np.arange(self.pole_low_index_N-grid_pad,c.nlat):
             self.data[i-self.pole_low_index_N,:] = self.coriolis[i]
         self.coriolis_plane_N = low_level.beam_me_up_2D(c.lat[(self.pole_low_index_N-grid_pad):],c.lon,self.data,self.grids[0],self.grid_lat_coords_N,self.grid_lon_coords_N)
@@ -214,7 +214,7 @@ class Claude:
             self.ax[1].set_yscale('log')
             self.ax[1].set_ylabel('Pressure (hPa)')
             self.ax[1].set_xlabel('Latitude')
-            self.cbar_ax = f.add_axes([0.85, 0.15, 0.05, 0.7])
+            self.cbar_ax = self.f.add_axes([0.85, 0.15, 0.05, 0.7])
             self.f.colorbar(test, cax=self.cbar_ax)
             self.cbar_ax.set_title('Temperature (K)')
             self.f.suptitle( 'Time ' + str(round(self.t/p.day,2)) + ' days' )
@@ -284,7 +284,7 @@ class Claude:
             if not pl.diagnostic:
                 
                 # field = temperature_world
-                field = np.copy(w)[:,:,self.sample_level]
+                field = np.copy(self.w)[:,:,self.sample_level]
                 # field = np.copy(atmosp_addition)[:,:,self.sample_level]
                 test = self.ax[0].contourf(c.lon_plot, c.lat_plot, field, cmap='seismic',levels=15)
                 self.ax[0].contour(c.lon_plot, c.lat_plot, self.tracer[:,:,self.sample_level], alpha=0.5, antialiased=True, levels=np.arange(0.01,1.01,0.01))
@@ -304,7 +304,7 @@ class Claude:
 
                 if self.velocity:
                     self.ax[1].contour(c.heights_plot,c.lat_z_plot, np.transpose(np.mean(self.u,axis=1))[:pl.top,:], colors='white',levels=20,linewidths=1,alpha=0.8)
-                    self.ax[1].quiver(c.heights_plot, c.lat_z_plot, np.transpose(np.mean(v,axis=1))[:pl.top,:],np.transpose(np.mean(-10*self.w,axis=1))[:pl.top,:],color='black')
+                    self.ax[1].quiver(c.heights_plot, c.lat_z_plot, np.transpose(np.mean(self.v,axis=1))[:pl.top,:],np.transpose(np.mean(-10*self.w,axis=1))[:pl.top,:],color='black')
                 self.ax[1].set_title('$\it{Atmospheric} \quad \it{temperature}$')
                 self.ax[1].set_xlim((-90,90))
                 self.ax[1].set_ylim((p.pressure_levels.max()/100,p.pressure_levels[:pl.top].min()/100))
@@ -313,7 +313,7 @@ class Claude:
                 self.ax[1].set_yscale('log')
                 self.f.colorbar(test, cax=self.cbar_ax)
                 self.cbar_ax.set_title('Temperature (K)')
-                f.suptitle( 'Time ' + str(round(self.t/p.day,2)) + ' days' )
+                self.f.suptitle( 'Time ' + str(round(self.t/p.day,2)) + ' days' )
                     
             else:
                 self.ax[0,0].contourf(c.heights_plot, c.lat_z_plot, np.transpose(np.mean(self.u,axis=1))[:pl.top,:], cmap='seismic')
@@ -327,7 +327,7 @@ class Claude:
                 for axis in self.ax.ravel():
                     axis.set_ylim((p.pressure_levels.max()/100,p.pressure_levels[:pl.top].min()/100))
                     axis.set_yscale('log')
-                f.suptitle( 'Time ' + str(round(self.t/p.day,2)) + ' days' )
+                self.f.suptitle( 'Time ' + str(round(self.t/p.day,2)) + ' days' )
 
             if pl.level_plots:
                 for k, z in zip(range(pl.nplots), self.level_plots_levels): 
@@ -387,8 +387,8 @@ class Claude:
                 self.gx[2].quiver(c.lon[::5],c.lat[self.pole_low_index_N:],self.u[self.pole_low_index_N:,::5,pl.above_level],self.v[self.pole_low_index_N:,::5,pl.above_level])
             
         # clear plots
-        if plot or above:   plt.pause(0.001)
-        if plot:
+        if pl.plot or pl.above:   plt.pause(0.001)
+        if pl.plot:
             if not c.diagnostic:
                 self.ax[0].cla()
                 self.ax[1].cla()
@@ -403,87 +403,93 @@ class Claude:
                 for k in range(pl.nplots):
                     self.bx[k].cla() 
             if self.verbose:     
-                time_taken = float(round(time.time() - before_plot,3))
-                print('Plotting: ',str(time_taken),'s') 
+                self.time_taken = float(round(time.time() - before_plot,3))
+                print('Plotting: ',str(self.time_taken),'s') 
         if pl.above:
             self.gx[0].cla()
             self.gx[1].cla()
             self.gx[2].cla()
 
     def run(self):
-        while True:
-            initial_time = time.time()
+        p  = self.planet
+        pl = self.plotting
+        c  = self.coordinates
+        s  = self.smoothing
+        sa = self.saving
 
-            if t < spinup_length:
-                dt = dt_spinup
-                velocity = False
+        while True:
+            self.initial_time = time.time()
+
+            if self.t < p.spinup_length:
+                self.dt = p.dt_spinup
+                self.velocity = False
             else:
-                dt = dt_main
-                velocity = True
+                self.dt = p.dt_main
+                self.velocity = True
 
             # print current time in simulation to command line
-            print("+++ t = " + str(round(t/day,2)) + " days +++")
-            print('T: ',round(temperature_world.max()-273.15,1),' - ',round(temperature_world.min()-273.15,1),' C')
-            print('U: ',round(u[:,:,:sponge_index-1].max(),2),' - ',round(u[:,:,:sponge_index-1].min(),2),' V: ',round(v[:,:,:sponge_index-1].max(),2),' - ',round(v[:,:,:sponge_index-1].min(),2),' W: ',round(w[:,:,:sponge_index-1].max(),2),' - ',round(w[:,:,:sponge_index-1].min(),4))
+            print("+++ t = " + str(round(self.t/p.day,2)) + " days +++")
+            print('T: ',round(c.temperature_world.max()-273.15,1),' - ',round(c.temperature_world.min()-273.15,1),' C')
+            print('U: ',round(self.u[:,:,:self.sponge_index-1].max(),2),' - ',round(self.u[:,:,:self.sponge_index-1].min(),2),' V: ',round(self.v[:,:,:self.sponge_index-1].max(),2),' - ',round(self.v[:,:,:self.sponge_index-1].min(),2),' W: ',round(self.w[:,:,:self.sponge_index-1].max(),2),' - ',round(self.w[:,:,:self.sponge_index-1].min(),4))
 
-            tracer[40,50,sample_level] = 1
-            tracer[20,50,sample_level] = 1
+            self.tracer[40,50,self.sample_level] = 1
+            self.tracer[20,50,self.sample_level] = 1
 
-            if verbose: before_radiation = time.time()
-            temperature_world, potential_temperature = top_level.radiation_calculation(temperature_world, potential_temperature, pressure_levels, heat_capacity_earth, albedo, insolation, lat, lon, t, dt, day, year, axial_tilt)
-            if smoothing: potential_temperature = top_level.smoothing_3D(potential_temperature,smoothing_parameter_t)
-            if verbose:
-                time_taken = float(round(time.time() - before_radiation,3))
-                print('Radiation: ',str(time_taken),'s')
+            if self.verbose: self.before_radiation = time.time()
+            c.temperature_world, self.potential_temperature = top_level.radiation_calculation(c.temperature_world, self.potential_temperature, p.pressure_levels, self.heat_capacity_earth, self.albedo, p.insolation, c.lat, c.lon, self.t, self.dt, p.day, p.year, p.axial_tilt)
+            if s.smoothing: self.potential_temperature = top_level.smoothing_3D(self.potential_temperature,s.smoothing_parameter_t)
+            if self.verbose:
+                self.time_taken = float(round(time.time() - self.before_radiation,3))
+                print('Radiation: ',str(self.time_taken),'s')
 
-            diffusion = top_level.laplacian_2d(temperature_world,dx,dy)
-            diffusion[0,:] = np.mean(diffusion[1,:],axis=0)
-            diffusion[-1,:] = np.mean(diffusion[-2,:],axis=0)
-            temperature_world -= dt*1E-5*diffusion
+            self.diffusion = top_level.laplacian_2d(c.temperature_world,self.dx,self.dy)
+            self.diffusion[0,:] = np.mean(self.diffusion[1,:],axis=0)
+            self.diffusion[-1,:] = np.mean(self.diffusion[-2,:],axis=0)
+            c.temperature_world -= self.dt*1E-5*self.diffusion
 
             # update geopotential field
-            geopotential = np.zeros_like(potential_temperature)
-            for k in np.arange(1,nlevels):  geopotential[:,:,k] = geopotential[:,:,k-1] - potential_temperature[:,:,k]*(sigma[k]-sigma[k-1])
+            self.geopotential = np.zeros_like(self.potential_temperature)
+            for k in np.arange(1,p.nlevels):  self.geopotential[:,:,k] = self.geopotential[:,:,k-1] - self.potential_temperature[:,:,k]*(self.sigma[k]-self.sigma[k-1])
 
-            if velocity:
+            if self.velocity:
 
-                if verbose: before_velocity = time.time()
+                if self.verbose: self.before_velocity = time.time()
                 
-                u_add,v_add = top_level.velocity_calculation(u,v,w,pressure_levels,geopotential,potential_temperature,coriolis,gravity,dx,dy,dt,sponge_index)
+                self.u_add,self.v_add = top_level.velocity_calculation(self.u,self.v,self.w,p.pressure_levels,self.geopotential,self.potential_temperature,self.coriolis,p.gravity,self.dx,self.dy,self.dt,self.sponge_index)
 
-                if verbose: 
-                    time_taken = float(round(time.time() - before_velocity,3))
-                    print('Velocity: ',str(time_taken),'s')
+                if self.verbose: 
+                    self.time_taken = float(round(time.time() - self.before_velocity,3))
+                    print('Velocity: ',str(self.time_taken),'s')
 
-                if verbose: before_projection = time.time()
+                if self.verbose: self.before_projection = time.time()
                 
-                grid_velocities = (x_dot_N,y_dot_N,x_dot_S,y_dot_S)
+                self.grid_velocities = (self.x_dot_N,self.y_dot_N,self.x_dot_S,self.y_dot_S)
             
-                u_add,v_add,x_dot_N,y_dot_N,x_dot_S,y_dot_S = top_level.polar_planes(u,v,u_add,v_add,potential_temperature,geopotential,grid_velocities,indices,grids,coords,coriolis_plane_N,coriolis_plane_S,grid_side_length,pressure_levels,lat,lon,dt,polar_grid_resolution,gravity,sponge_index)
+                self.u_add,self.v_add,self.x_dot_N,self.y_dot_N,self.x_dot_S,self.y_dot_S = top_level.polar_planes(self.u,self.v,self.u_add,self.v_add,self.potential_temperature,self.geopotential,self.grid_velocities,self.indices,self.grids,self.coords,self.coriolis_plane_N,self.coriolis_plane_S,self.grid_side_length,p.pressure_levels,c.lat,c.lon,self.dt,self.polar_grid_resolution,p.gravity,self.sponge_index)
                 
-                u += u_add
-                v += v_add
+                self.u += self.u_add
+                self.v += self.v_add
 
-                if smoothing: u = top_level.smoothing_3D(u,smoothing_parameter_u)
-                if smoothing: v = top_level.smoothing_3D(v,smoothing_parameter_v)
+                if s.smoothing: self.u = top_level.smoothing_3D(self.u,s.smoothing_parameter_u)
+                if s.smoothing: self.v = top_level.smoothing_3D(self.v,s.smoothing_parameter_v)
 
-                x_dot_N,y_dot_N,x_dot_S,y_dot_S = top_level.update_plane_velocities(lat,lon,pole_low_index_N,pole_low_index_S,np.flip(u[pole_low_index_N:,:,:],axis=1),np.flip(v[pole_low_index_N:,:,:],axis=1),grids,grid_lat_coords_N,grid_lon_coords_N,u[:pole_low_index_S,:,:],v[:pole_low_index_S,:,:],grid_lat_coords_S,grid_lon_coords_S)
-                grid_velocities = (x_dot_N,y_dot_N,x_dot_S,y_dot_S)
+                self.x_dot_N,self.y_dot_N,self.x_dot_S,self.y_dot_S = top_level.update_plane_velocities(c.lat,c.lon,self.pole_low_index_N,self.pole_low_index_S,np.flip(self.u[self.pole_low_index_N:,:,:],axis=1),np.flip(self.v[self.pole_low_index_N:,:,:],axis=1),self.grids,self.grid_lat_coords_N,self.grid_lon_coords_N,self.u[:self.pole_low_index_S,:,:],self.v[:self.pole_low_index_S,:,:],self.grid_lat_coords_S,self.grid_lon_coords_S)
+                self.grid_velocities = (self.x_dot_N,self.y_dot_N,self.x_dot_S,self.y_dot_S)
                 
-                if verbose: 
-                    time_taken = float(round(time.time() - before_projection,3))
-                    print('Projection: ',str(time_taken),'s')
+                if self.verbose: 
+                    self.time_taken = float(round(time.time() - self.before_projection,3))
+                    print('Projection: ',str(self.time_taken),'s')
 
                 ### allow for thermal advection in the atmosphere
-                if verbose: before_advection = time.time()
+                if self.verbose: self.before_advection = time.time()
 
-                if verbose: before_w = time.time()
+                if self.verbose: self.before_w = time.time()
                 # using updated u,v fields calculated w
                 # https://www.sjsu.edu/faculty/watkins/omega.htm
-                w = -top_level.w_calculation(u,v,w,pressure_levels,geopotential,potential_temperature,coriolis,gravity,dx,dy,dt,indices,coords,grids,grid_velocities,polar_grid_resolution,lat,lon)
-                if smoothing: w = top_level.smoothing_3D(w,smoothing_parameter_w,0.25)
+                self.w = -top_level.w_calculation(self.u,self.v,self.w,p.pressure_levels,self.geopotential,self.potential_temperature,self.coriolis,p.gravity,self.dx,self.dy,self.dt,self.indices,self.coords,self.grids,self.grid_velocities,self.polar_grid_resolution,c.lat,c.lon)
+                if s.smoothing: self.w = top_level.smoothing_3D(self.w,s.smoothing_parameter_w,0.25)
 
-                w[:,:,18:] *= 0
+                self.w[:,:,18:] *= 0
                 # w[:1,:,:] *= 0
                 # w[-1:,:,:] *= 0
 
@@ -491,58 +497,58 @@ class Claude:
                 # plt.gca().invert_yaxis()
                 # plt.show()
 
-                if verbose: 
-                    time_taken = float(round(time.time() - before_w,3))
-                    print('Calculate w: ',str(time_taken),'s')
+                if self.verbose: 
+                    self.time_taken = float(round(time.time() - self.before_w,3))
+                    print('Calculate w: ',str(self.time_taken),'s')
 
                 #################################
                 
-                atmosp_addition = top_level.divergence_with_scalar(potential_temperature,u,v,w,dx,dy,lat,lon,pressure_levels,polar_grid_resolution,indices,coords,grids,grid_velocities)
+                self.atmosp_addition = top_level.divergence_with_scalar(self.potential_temperature,self.u,self.v,self.w,self.dx,self.dy,c.lat,c.lon,p.pressure_levels,self.polar_grid_resolution,self.indices,self.coords,self.grids,self.grid_velocities)
 
-                if smoothing: atmosp_addition = top_level.smoothing_3D(atmosp_addition,smoothing_parameter_add)
+                if s.smoothing: self.atmosp_addition = top_level.smoothing_3D(self.atmosp_addition,s.smoothing_parameter_add)
 
-                atmosp_addition[:,:,sponge_index-1] *= 0.5
-                atmosp_addition[:,:,sponge_index:] *= 0
+                self.atmosp_addition[:,:,self.sponge_index-1] *= 0.5
+                self.atmosp_addition[:,:,self.sponge_index:] *= 0
 
-                potential_temperature -= dt*atmosp_addition
-
-                ###################################################################
-
-                tracer_addition = top_level.divergence_with_scalar(tracer,u,v,w,dx,dy,lat,lon,pressure_levels,polar_grid_resolution,indices,coords,grids,grid_velocities)
-                tracer -= dt*tracer_addition
-
-                diffusion = top_level.laplacian_3d(potential_temperature,dx,dy,pressure_levels)
-                diffusion[0,:,:] = np.mean(diffusion[1,:,:],axis=0)
-                diffusion[-1,:,:] = np.mean(diffusion[-2,:,:],axis=0)
-                potential_temperature -= dt*1E-4*diffusion
-
-                courant = w*dt
-                for k in range(nlevels-1):
-                    courant[:,:,k] /= (pressure_levels[k+1] - pressure_levels[k])
-                print('Courant max: ',round(abs(courant).max(),3))
+                self.potential_temperature -= self.dt*self.atmosp_addition
 
                 ###################################################################
 
-                if verbose: 
-                    time_taken = float(round(time.time() - before_advection,3))
-                    print('Advection: ',str(time_taken),'s')
+                self.tracer_addition = top_level.divergence_with_scalar(self.tracer,self.u,self.v,self.w,self.dx,self.dy,c.lat,c.lon,p.pressure_levels,self.polar_grid_resolution,self.indices,self.coords,self.grids,self.grid_velocities)
+                self.tracer -= self.dt*self.tracer_addition
 
-            if t-last_plot >= plot_frequency*dt:
-                plotting_routine()
-                last_plot = t
+                self.diffusion = top_level.laplacian_3d(self.potential_temperature,self.dx,self.dy,p.pressure_levels)
+                self.diffusion[0,:,:] = np.mean(self.diffusion[1,:,:],axis=0)
+                self.diffusion[-1,:,:] = np.mean(self.diffusion[-2,:,:],axis=0)
+                self.potential_temperature -= self.dt*1E-4*self.diffusion
 
-            if save:
-                if t-last_save >= save_frequency*dt:
-                    pickle.dump((potential_temperature,temperature_world,u,v,w,x_dot_N,y_dot_N,x_dot_S,y_dot_S,t,albedo,tracer), open("save_file.p","wb"))
-                    last_save = t
+                self.courant = self.w*self.dt
+                for k in range(p.nlevels-1):
+                    self.courant[:,:,k] /= (p.pressure_levels[k+1] - p.pressure_levels[k])
+                print('Courant max: ',round(abs(self.courant).max(),3))
 
-            if np.isnan(u.max()):
+                ###################################################################
+
+                if self.verbose: 
+                    self.time_taken = float(round(time.time() - self.before_advection,3))
+                    print('Advection: ',str(self.time_taken),'s')
+
+            if self.t-self.last_plot >= pl.plot_frequency*self.dt:
+                self.__plotting_routine()
+                self.last_plot = self.t
+
+            if sa.save:
+                if self.t-self.last_save >= sa.save_frequency*self.dt:
+                    pickle.dump((self.potential_temperature,c.temperature_world,self.u,self.v,self.w,self.x_dot_N,self.y_dot_N,self.x_dot_S,self.y_dot_S,self.t,self.albedo,self.tracer), open("save_file.p","wb"))
+                    self.last_save = self.t
+
+            if np.isnan(self.u.max()):
                 sys.exit()
 
             # advance time by one timestep
-            t += dt
+            self.t += self.dt
 
-            time_taken = float(round(time.time() - initial_time,3))
+            self.time_taken = float(round(time.time() - self.initial_time,3))
 
-            print('Time: ',str(time_taken),'s')
+            print('Time: ',str(self.time_taken),'s')
             # print('777777777777777777')

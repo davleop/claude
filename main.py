@@ -24,8 +24,8 @@ def main():
     claude.setup()
     claude.init()
     claude.setup_grids()
-    # claude.plot()
-    # claude.run()
+    claude.plot()
+    claude.run()
 
 if __name__ == '__main__':
     main()
