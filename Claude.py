@@ -14,6 +14,7 @@ import time
 import pickle 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation as ani
 
 from copy import deepcopy
 
@@ -45,24 +46,25 @@ class Claude(ClaudeBackend):
                 self.velocity = True
 
             # print current time in simulation to command line
-            print("+++ t = " + str(round(self.t/self.day,2)) + " days +++")
-            print('T: ',
-                  round(self.temperature_world.max()-273.15,1),
-                  ' - ',
-                  round(self.temperature_world.min()-273.15,1),
-                  ' C')
-            print('U: ',
-                  round(self.u[:,:,:self.sponge_index-1].max(),2),
-                  ' - ',
-                  round(self.u[:,:,:self.sponge_index-1].min(),2),
-                  ' V: ',
-                  round(self.v[:,:,:self.sponge_index-1].max(),2),
-                  ' - ',
-                  round(self.v[:,:,:self.sponge_index-1].min(),2),
-                  ' W: ',
-                  round(self.w[:,:,:self.sponge_index-1].max(),2),
-                  ' - ',
-                  round(self.w[:,:,:self.sponge_index-1].min(),4))
+            if self.verbose:
+                print("+++ t = " + str(round(self.t/self.day,2)) + " days +++")
+                print('T: ',
+                      round(self.temperature_world.max()-273.15,1),
+                      ' - ',
+                      round(self.temperature_world.min()-273.15,1),
+                      ' C')
+                print('U: ',
+                      round(self.u[:,:,:self.sponge_index-1].max(),2),
+                      ' - ',
+                      round(self.u[:,:,:self.sponge_index-1].min(),2),
+                      ' V: ',
+                      round(self.v[:,:,:self.sponge_index-1].max(),2),
+                      ' - ',
+                      round(self.v[:,:,:self.sponge_index-1].min(),2),
+                      ' W: ',
+                      round(self.w[:,:,:self.sponge_index-1].max(),2),
+                      ' - ',
+                      round(self.w[:,:,:self.sponge_index-1].min(),4))
 
             self.tracer[40,50,self.sample_level] = 1
             self.tracer[20,50,self.sample_level] = 1
@@ -270,7 +272,8 @@ class Claude(ClaudeBackend):
                 self.courant = self.w*self.dt
                 for k in range(self.nlevels-1):
                     self.courant[:,:,k] /= (self.pressure_levels[k+1] - self.pressure_levels[k])
-                print('Courant max: ',round(abs(self.courant).max(),3))
+                if self.verbose:
+                    print('Courant max: ',round(abs(self.courant).max(),3))
 
                 ###################################################################
 
@@ -299,11 +302,12 @@ class Claude(ClaudeBackend):
                     self.last_save = self.t
 
             if np.isnan(self.u.max()):
-                syself.exit()
+                sys.exit()
 
             # advance time by one timestep
             self.t += self.dt
 
             self.time_taken = float(round(time.time() - self.initial_time,3))
 
-            print('Time: ',str(self.time_taken),'s')
+            if self.verbose:
+                print('Time: ',str(self.time_taken),'s')

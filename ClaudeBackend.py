@@ -516,7 +516,7 @@ class ClaudeBackend:
                                      self.planet_radius*np.cos(self.lat[self.pole_high_index_N]*np.pi/180.0)/1E3,
                                      color='r',
                                      fill=False))
-        
+
                 self.gx[2].set_title('south_addition_smoothed')
                 self.gx[2].contourf(self.lon,
                                     self.lat[self.pole_low_index_N:],
@@ -525,15 +525,15 @@ class ClaudeBackend:
                                   self.lat[self.pole_low_index_N:],
                                   self.u[self.pole_low_index_N:,::5,self.above_level],
                                   self.v[self.pole_low_index_N:,::5,self.above_level])
-            
+
         # clear plots
-        if self.plot or self.above:   plt.pause(0.001)
+        if self.plot or self.above: plt.pause(0.001)
         if self.plot:
             if not self.diagnostic:
                 self.ax[0].cla()
                 self.ax[1].cla()
                 self.cbar_ax.cla()
-                        
+
             else:
                 self.ax[0,0].cla()
                 self.ax[0,1].cla()
