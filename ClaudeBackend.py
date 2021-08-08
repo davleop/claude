@@ -30,11 +30,8 @@ class ClaudeBackend:
                 except: # probably catch the exact exception, but eh
                     exec("self.{} = self.settings.{}".format(item, item))
 
-        # do these at the same time...
         self._setup()
         self._init()
-
-        # do after setup and init has been called
         self._setup_grids()
         self._plot()
 
@@ -178,7 +175,15 @@ class ClaudeBackend:
         self.x_dot_S = np.zeros((self.grids[1],self.grids[1],self.nlevels))
         self.y_dot_S = np.zeros((self.grids[1],self.grids[1],self.nlevels))
 
-        self.coords  = self.grid_lat_coords_N,self.grid_lon_coords_N,self.grid_x_values_N,self.grid_y_values_N,self.polar_x_coords_N,self.polar_y_coords_N,self.grid_lat_coords_S,self.grid_lon_coords_S,self.grid_x_values_S,self.grid_y_values_S,self.polar_x_coords_S,self.polar_y_coords_S
+        N_grid = self.grid_lat_coords_N,self.grid_lon_coords_N
+        N_vals = self.grid_x_values_N,self.grid_y_values_N
+        N_pols = self.polar_x_coords_N,self.polar_y_coords_N
+
+        S_grid = self.grid_lat_coords_S,self.grid_lon_coords_S
+        S_vals = self.grid_x_values_S,self.grid_y_values_S
+        S_pols = self.polar_x_coords_S,self.polar_y_coords_S
+
+        self.coords = N_grid + N_vals + N_pols + S_grid + S_vals + S_pols
 
     def _plot(self) -> None:
         if not self.diagnostic:
